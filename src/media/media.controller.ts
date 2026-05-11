@@ -8,7 +8,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 @Controller('media')
 export class MediaController {
