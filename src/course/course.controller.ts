@@ -3,31 +3,34 @@ import {
   Get,
   Post,
   Body,
-  Query,
+  Patch,
   Param,
   Delete,
-  Patch,
+  Query,
   UseGuards,
-  Request,
   UseInterceptors,
   UploadedFile,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as express from 'express';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CourseService } from './course.service';
+import { CreateCourseDto } from './dto/create-course.dto';
+import { UpdateCourseDto } from './dto/update-course.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from './entities/user.entity';
+import { UserRole } from '../users/entities/user.entity';
 
-@Controller('users')
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+@Controller('course')
+export class CourseController {
+  constructor(private readonly courseService: CourseService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
@@ -41,29 +44,32 @@ export class UsersController {
     }),
   )
   create(
-    @Body() createUserDto: CreateUserDto,
+    @Body() createCourseDto: CreateCourseDto,
     @UploadedFile() file: any,
-    @Request() req: express.Request,
+    @Req() req: express.Request,
   ) {
-    return this.usersService.create(createUserDto, file, req);
+    return this.courseService.create(createCourseDto, file, req);
   }
 
   @Get()
   findAll(
     @Query('search') search?: string,
+    @Query('category') categoryId?: string,
+    @Query('instructor') instructorId?: string,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    return this.usersService.findAll({ search, page, limit });
+    return this.courseService.findAll({ search, categoryId, instructorId, page, limit });
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+    return this.courseService.findOne(+id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Patch('profile')
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.INSTRUCTOR)
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
@@ -76,43 +82,19 @@ export class UsersController {
       }),
     }),
   )
-  updateProfile(
-    @Request() req: any, 
-    @Body() updateData: any,
+  update(
+    @Param('id') id: string,
+    @Body() updateCourseDto: UpdateCourseDto,
     @UploadedFile() file: any,
+    @Req() req: express.Request,
   ) {
-    return this.usersService.update(req.user.id, updateData, file, req);
+    return this.courseService.update(+id, updateCourseDto, file, req);
   }
 
-  // ===========================================================================
-  // ADMINISTRATIVE ENDPOINTS (ADMIN ONLY)
-  // ===========================================================================
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @Patch(':id/ban')
-  ban(@Param('id') id: string, @Body('reason') reason: string) {
-    return this.usersService.ban(+id, reason);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @Patch(':id/unban')
-  unban(@Param('id') id: string) {
-    return this.usersService.unban(+id);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
-  }
-
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @Patch(':id/restore')
-  restore(@Param('id') id: string) {
-    return this.usersService.restore(+id);
+  remove(@Param('id') id: string) {
+    return this.courseService.remove(+id);
   }
 }

@@ -8,16 +8,19 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import type { Request } from 'express';
+import * as express from 'express';
+import { MediaService } from './media.service';
 
 @Controller('media')
 export class MediaController {
+  constructor(private mediaService: MediaService) { }
+
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('image', {
       storage: diskStorage({
         destination: './uploads',
-        filename: (req, file, callback) => {
+        filename: (req: any, file: any, callback: any) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
           const ext = extname(file.originalname);
@@ -26,10 +29,8 @@ export class MediaController {
       }),
     }),
   )
-  uploadFile(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-    const protocol = req.protocol;
-    const host = req.get('host');
-    const fullUrl = `${protocol}://${host}/uploads/${file.filename}`;
+  uploadFile(@UploadedFile() file: any, @Req() req: express.Request) {
+    const fullUrl = this.mediaService.getUploadUrl(file.filename, req);
 
     return {
       originalname: file.originalname,

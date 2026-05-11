@@ -6,6 +6,11 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { HealthModule } from './health/health.module';
 import { MediaModule } from './media/media.module';
+import { AuthModule } from './auth/auth.module';
+import { CourseModule } from './course/course.module';
+import { CategoryModule } from './category/category.module';
+import { InstructorModule } from './instructor/instructor.module';
+import { EnrollmentModule } from './enrollment/enrollment.module';
 
 @Module({
   imports: [
@@ -28,6 +33,11 @@ import { MediaModule } from './media/media.module';
     UsersModule,
     HealthModule,
     MediaModule,
+    AuthModule,
+    CourseModule,
+    CategoryModule,
+    InstructorModule,
+    EnrollmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
