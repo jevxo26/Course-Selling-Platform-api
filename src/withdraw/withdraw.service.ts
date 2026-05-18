@@ -6,6 +6,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { Product, ProductStatus } from '../products/entities/product.entity';
 import { User, UserRole } from '../users/entities/user.entity';
 import { Percentage, PercentageType } from '../percentage/entities/percentage.entity';
+import { Enrollment, EnrollmentStatus } from '../enrollment/entities/enrollment.entity';
 import { CreateWithdrawDto } from './dto/create-withdraw.dto';
 import { DirectWithdrawDto } from './dto/direct-withdraw.dto';
 
@@ -20,29 +21,14 @@ export class WithdrawService {
     private userRepository: Repository<User>,
     @InjectRepository(Percentage)
     private percentageRepository: Repository<Percentage>,
+    @InjectRepository(Enrollment)
+    private enrollmentRepository: Repository<Enrollment>,
     private walletService: WalletService,
   ) {}
 
   async requestWithdrawal(userId: number, createWithdrawDto: CreateWithdrawDto) {
-    const product = await this.productRepository.findOne({
-      where: { id: createWithdrawDto.productId, user: { id: userId } },
-      relations: ['user'],
-    });
-
-    if (!product) {
-      throw new NotFoundException('Product not found or does not belong to you');
-    }
-
-    if (product.status !== ProductStatus.APPROVED) {
-      throw new BadRequestException(`Product must be APPROVED to request withdrawal. Current status: ${product.status}`);
-    }
-
-    const existingWithdraw = await this.withdrawRepository.findOne({
-      where: { product: { id: product.id }, status: WithdrawStatus.PENDING },
-    });
-
-    if (existingWithdraw) {
-      throw new BadRequestException('A withdrawal request for this product is already pending');
+    if (!createWithdrawDto.productId && !createWithdrawDto.enrollmentId) {
+      throw new BadRequestException('Either productId or enrollmentId must be provided');
     }
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -50,14 +36,73 @@ export class WithdrawService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const withdraw = this.withdrawRepository.create({
-      user,
-      product,
-      totalAmount: product.totalAmount,
-      status: WithdrawStatus.PENDING,
-    });
+    if (createWithdrawDto.productId) {
+      const product = await this.productRepository.findOne({
+        where: { id: createWithdrawDto.productId, user: { id: userId } },
+        relations: ['user'],
+      });
 
-    return await this.withdrawRepository.save(withdraw);
+      if (!product) {
+        throw new NotFoundException('Product not found or does not belong to you');
+      }
+
+      if (product.status !== ProductStatus.APPROVED) {
+        throw new BadRequestException(`Product must be APPROVED to request withdrawal. Current status: ${product.status}`);
+      }
+
+      const existingWithdraw = await this.withdrawRepository.findOne({
+        where: { product: { id: product.id }, status: WithdrawStatus.PENDING },
+      });
+
+      if (existingWithdraw) {
+        throw new BadRequestException('A withdrawal request for this product is already pending');
+      }
+
+      const withdraw = this.withdrawRepository.create({
+        user,
+        product,
+        totalAmount: product.totalAmount,
+        status: WithdrawStatus.PENDING,
+      });
+
+      return await this.withdrawRepository.save(withdraw);
+    }
+
+    if (createWithdrawDto.enrollmentId) {
+      const enrollment = await this.enrollmentRepository.findOne({
+        where: { id: createWithdrawDto.enrollmentId, affiliate: { id: userId } },
+        relations: ['affiliate'],
+      });
+
+      if (!enrollment) {
+        throw new NotFoundException('Enrollment not found or you are not the affiliate for it');
+      }
+
+      if (enrollment.status !== EnrollmentStatus.COMPLETED) {
+        throw new BadRequestException('Enrollment must be COMPLETED to request withdrawal');
+      }
+
+      const existingWithdraw = await this.withdrawRepository.findOne({
+        where: { enrollment: { id: enrollment.id }, status: WithdrawStatus.PENDING },
+      });
+      // also check if APPROVED to prevent double withdrawal
+      const approvedWithdraw = await this.withdrawRepository.findOne({
+        where: { enrollment: { id: enrollment.id }, status: WithdrawStatus.APPROVED },
+      });
+
+      if (existingWithdraw || approvedWithdraw) {
+        throw new BadRequestException('A withdrawal request for this enrollment has already been made');
+      }
+
+      const withdraw = this.withdrawRepository.create({
+        user,
+        enrollment,
+        totalAmount: enrollment.amount,
+        status: WithdrawStatus.PENDING,
+      });
+
+      return await this.withdrawRepository.save(withdraw);
+    }
   }
 
   private async getPercentageForUser(role: UserRole): Promise<Percentage> {
@@ -85,7 +130,7 @@ export class WithdrawService {
   async approveWithdrawal(withdrawId: number, percentageId?: number) {
     const withdraw = await this.withdrawRepository.findOne({
       where: { id: withdrawId },
-      relations: ['user', 'product'],
+      relations: ['user', 'product', 'enrollment'],
     });
 
     if (!withdraw) {
@@ -120,7 +165,9 @@ export class WithdrawService {
     await this.walletService.addBalance(withdraw.user.id, studentAmount);
     await this.walletService.addBalance(adminUser.id, adminAmount);
 
-    await this.productRepository.update(withdraw.product.id, { status: ProductStatus.PAID });
+    if (withdraw.product) {
+      await this.productRepository.update(withdraw.product.id, { status: ProductStatus.PAID });
+    }
 
     withdraw.percentage = percentageEntity;
     withdraw.adminAmount = adminAmount;
@@ -147,17 +194,42 @@ export class WithdrawService {
   }
 
   async directWithdrawal(dto: DirectWithdrawDto) {
-    const product = await this.productRepository.findOne({
-      where: { id: dto.productId, user: { id: dto.studentId } },
-      relations: ['user'],
-    });
-
-    if (!product) {
-      throw new NotFoundException('Product not found for this student');
+    if (!dto.productId && !dto.enrollmentId) {
+      throw new BadRequestException('Either productId or enrollmentId must be provided');
     }
 
-    if (product.status !== ProductStatus.APPROVED) {
-      throw new BadRequestException('Only APPROVED products can be withdrawn');
+    let totalAmount = 0;
+    let product = null;
+    let enrollment = null;
+
+    if (dto.productId) {
+      product = await this.productRepository.findOne({
+        where: { id: dto.productId, user: { id: dto.studentId } },
+        relations: ['user'],
+      });
+
+      if (!product) {
+        throw new NotFoundException('Product not found for this student');
+      }
+
+      if (product.status !== ProductStatus.APPROVED) {
+        throw new BadRequestException('Only APPROVED products can be withdrawn');
+      }
+      totalAmount = Number(product.totalAmount);
+    } else if (dto.enrollmentId) {
+      enrollment = await this.enrollmentRepository.findOne({
+        where: { id: dto.enrollmentId, affiliate: { id: dto.studentId } },
+        relations: ['affiliate'],
+      });
+
+      if (!enrollment) {
+        throw new NotFoundException('Enrollment not found or student is not the affiliate');
+      }
+
+      if (enrollment.status !== EnrollmentStatus.COMPLETED) {
+        throw new BadRequestException('Enrollment must be COMPLETED to withdraw');
+      }
+      totalAmount = Number(enrollment.amount);
     }
 
     const student = await this.userRepository.findOne({ where: { id: dto.studentId } });
@@ -176,7 +248,6 @@ export class WithdrawService {
       throw new NotFoundException('Percentage configuration not found');
     }
     
-    const totalAmount = Number(product.totalAmount);
     const percentage = Number(percentageEntity.percentage);
     const adminAmount = (totalAmount * percentage) / 100;
     const studentAmount = totalAmount - adminAmount;
@@ -189,17 +260,20 @@ export class WithdrawService {
     await this.walletService.addBalance(student.id, studentAmount);
     await this.walletService.addBalance(adminUser.id, adminAmount);
 
-    await this.productRepository.update(product.id, { status: ProductStatus.PAID });
+    if (product) {
+      await this.productRepository.update(product.id, { status: ProductStatus.PAID });
+    }
 
     const withdraw = this.withdrawRepository.create({
       user: student,
-      product,
+      product: product,
+      enrollment: enrollment,
       percentage: percentageEntity,
       totalAmount,
       adminAmount,
       studentAmount,
       status: WithdrawStatus.APPROVED,
-    });
+    } as any);
 
     return await this.withdrawRepository.save(withdraw);
   }
@@ -211,6 +285,7 @@ export class WithdrawService {
     const query = this.withdrawRepository.createQueryBuilder('withdraw')
       .leftJoinAndSelect('withdraw.user', 'user')
       .leftJoinAndSelect('withdraw.product', 'product')
+      .leftJoinAndSelect('withdraw.enrollment', 'enrollment')
       .leftJoinAndSelect('withdraw.percentage', 'percentage')
       .orderBy('withdraw.createdAt', 'DESC');
 
@@ -251,6 +326,7 @@ export class WithdrawService {
     const query = this.withdrawRepository.createQueryBuilder('withdraw')
       .leftJoinAndSelect('withdraw.user', 'user')
       .leftJoinAndSelect('withdraw.product', 'product')
+      .leftJoinAndSelect('withdraw.enrollment', 'enrollment')
       .leftJoinAndSelect('withdraw.percentage', 'percentage')
       .where('user.id = :userId', { userId: user.id })
       .orderBy('withdraw.createdAt', 'DESC');
@@ -309,7 +385,7 @@ export class WithdrawService {
   async findOne(id: number) {
     return await this.withdrawRepository.findOne({
       where: { id },
-      relations: ['user', 'product', 'percentage'],
+      relations: ['user', 'product', 'enrollment', 'percentage'],
     });
   }
 

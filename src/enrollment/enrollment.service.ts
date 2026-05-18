@@ -50,11 +50,20 @@ export class EnrollmentService {
       },
     });
 
+    let affiliateUser: User | null = null;
+    if (createEnrollmentDto.referCode) {
+      affiliateUser = await this.userRepository.findOne({ where: { referCode: createEnrollmentDto.referCode } });
+    }
+
     if (!enrollment) {
       enrollment = this.enrollmentRepository.create({
         student,
         course,
+        ...(affiliateUser ? { affiliate: affiliateUser } : {}),
       });
+
+    } else if (!enrollment.affiliate && affiliateUser) {
+      enrollment.affiliate = affiliateUser;
     }
 
     enrollment.amount = createEnrollmentDto.amount || course.price;
@@ -117,13 +126,21 @@ export class EnrollmentService {
       throw new BadRequestException('Student already enrolled');
     }
 
+    let affiliateUser: User | null = null;
+    if (manualEnrollmentDto.referCode) {
+      affiliateUser = await this.userRepository.findOne({ where: { referCode: manualEnrollmentDto.referCode } });
+    }
+
     if (!enrollment) {
       enrollment = this.enrollmentRepository.create({
         student,
         course,
         amount: amount,
         isManual: true,
+        ...(affiliateUser ? { affiliate: affiliateUser } : {}),
       });
+    } else if (!enrollment.affiliate && affiliateUser) {
+      enrollment.affiliate = affiliateUser;
     }
 
     enrollment.amount = amount;

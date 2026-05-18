@@ -99,6 +99,20 @@ export class UsersController {
   }
 
   // ===========================================================================
+  // AFFILIATE DASHBOARD
+  // ===========================================================================
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.AFFILIATE)
+  @Get('affiliate/dashboard')
+  getAffiliateDashboard(
+    @Request() req: any,
+    @Query('frontendUrl') frontendUrl?: string,
+  ) {
+    return this.usersService.getAffiliateDashboard(req.user.id, frontendUrl);
+  }
+
+  // ===========================================================================
   // ADMINISTRATIVE ENDPOINTS (ADMIN ONLY)
   // ===========================================================================
 

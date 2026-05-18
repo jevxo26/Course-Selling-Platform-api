@@ -4,10 +4,13 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { User } from './entities/user.entity';
 import { MediaModule } from '../media/media.module';
+import { Course } from '../course/entities/course.entity';
+import { Enrollment } from '../enrollment/entities/enrollment.entity';
+import { Percentage } from '../percentage/entities/percentage.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Course, Enrollment, Percentage]),
     MediaModule,
   ],
   providers: [UsersService],

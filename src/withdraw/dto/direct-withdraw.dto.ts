@@ -4,8 +4,13 @@ export class DirectWithdrawDto {
   @IsNumber()
   studentId: number;
 
+  @IsOptional()
   @IsNumber()
-  productId: number;
+  productId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  enrollmentId?: number;
 
   @IsNumber()
   @IsOptional()

@@ -1,6 +1,11 @@
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 
 export class CreateWithdrawDto {
+  @IsOptional()
   @IsNumber()
-  productId: number;
+  productId?: number;
+
+  @IsOptional()
+  @IsNumber()
+  enrollmentId?: number;
 }

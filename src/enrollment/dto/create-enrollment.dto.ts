@@ -20,4 +20,8 @@ export class CreateEnrollmentDto {
   @IsString()
   @IsOptional()
   transactionId?: string;
+
+  @IsString()
+  @IsOptional()
+  referCode?: string;
 }

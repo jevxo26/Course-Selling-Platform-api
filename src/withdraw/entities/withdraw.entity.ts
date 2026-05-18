@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, Up
 import { User } from '../../users/entities/user.entity';
 import { Product } from '../../products/entities/product.entity';
 import { Percentage } from '../../percentage/entities/percentage.entity';
+import { Enrollment } from '../../enrollment/entities/enrollment.entity';
 
 export enum WithdrawStatus {
   PENDING = 'pending',
@@ -17,11 +18,17 @@ export class Withdraw {
   @ManyToOne(() => User)
   user: User;
 
-  @ManyToOne(() => Product)
-  product: Product;
+  @ManyToOne(() => Product, { nullable: true })
+  product?: Product;
+
+
+  @ManyToOne(() => Enrollment, { nullable: true })
+  enrollment?: Enrollment;
+
 
   @ManyToOne(() => Percentage, { nullable: true })
-  percentage: Percentage;
+  percentage?: Percentage;
+
 
   @Column({ type: 'decimal', precision: 15, scale: 2 })
   totalAmount: number;

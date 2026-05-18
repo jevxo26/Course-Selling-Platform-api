@@ -20,4 +20,8 @@ export class ManualEnrollmentDto {
   @IsString()
   @IsOptional()
   transactionId?: string;
+
+  @IsString()
+  @IsOptional()
+  referCode?: string;
 }

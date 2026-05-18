@@ -6,12 +6,21 @@ import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
 import * as express from 'express';
 import { MediaService } from '../media/media.service';
+import { Course } from '../course/entities/course.entity';
+import { Enrollment, EnrollmentStatus } from '../enrollment/entities/enrollment.entity';
+import { Percentage, PercentageType } from '../percentage/entities/percentage.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Course)
+    private courseRepository: Repository<Course>,
+    @InjectRepository(Enrollment)
+    private enrollmentRepository: Repository<Enrollment>,
+    @InjectRepository(Percentage)
+    private percentageRepository: Repository<Percentage>,
     private mediaService: MediaService,
   ) {}
 
@@ -42,12 +51,20 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    let referCode = createUserDto.referCode;
+    if (!referCode && createUserDto.role === 'affiliate') {
+      const namePart = createUserDto.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      referCode = `${namePart}${randomPart}`;
+    }
+
     const user = this.usersRepository.create({
       ...createUserDto,
       password: hashedPassword,
       photo: photoUrl,
       nidFrontSide: nidFrontUrl,
       nidBackSide: nidBackUrl,
+      referCode: referCode,
     });
     return this.usersRepository.save(user);
   }
@@ -107,6 +124,56 @@ export class UsersService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  // ===========================================================================
+  // AFFILIATE DASHBOARD
+  // ===========================================================================
+
+  async getAffiliateDashboard(userId: number, frontendUrl: string = 'http://localhost:3000') {
+    const user = await this.findOne(userId);
+    if (!user) {
+      throw new ConflictException('User not found');
+    }
+    
+    // Fallback if affiliate percentage not set
+    let affiliatePercentage = 0;
+    const percentageConfig = await this.percentageRepository.findOne({ where: { type: PercentageType.AFFILIATE } });
+    if (percentageConfig) {
+      affiliatePercentage = Number(percentageConfig.percentage);
+    }
+
+    const courses = await this.courseRepository.find({ where: { isPublished: true } });
+    const dashboardStats = [];
+
+    for (const course of courses) {
+      const enrollments = await this.enrollmentRepository.find({
+        where: {
+          course: { id: course.id },
+          affiliate: { id: user.id },
+          status: EnrollmentStatus.COMPLETED
+        }
+      });
+
+      const totalEnrollments = enrollments.length;
+      let totalIncome = 0;
+      
+      for (const enrollment of enrollments) {
+        totalIncome += (Number(enrollment.amount) * affiliatePercentage) / 100;
+      }
+
+      dashboardStats.push({
+        courseId: course.id,
+        courseTitle: course.title,
+        courseThumbnail: course.thumbnail,
+        price: course.price,
+        affiliateLink: `${frontendUrl}/course/${course.id}?ref=${user.referCode}`,
+        totalEnrollments,
+        totalIncome
+      });
+    }
+
+    return dashboardStats;
   }
 
   // ===========================================================================

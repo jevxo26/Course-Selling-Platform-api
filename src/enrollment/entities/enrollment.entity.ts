@@ -27,6 +27,9 @@ export class Enrollment {
   @ManyToOne(() => Course)
   course: Course;
 
+  @ManyToOne(() => User, { nullable: true })
+  affiliate?: User;
+
   @Column({
     type: 'enum',
     enum: EnrollmentStatus,
