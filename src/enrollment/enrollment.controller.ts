@@ -67,6 +67,13 @@ export class EnrollmentController {
     return await this.enrollmentService.getStudentCourses(req.user.id);
   }
 
+  @Get('referred')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.AFFILIATE)
+  async getReferredEnrollments(@Req() req: any) {
+    return await this.enrollmentService.getReferredEnrollments(req.user.id);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)

@@ -13,6 +13,7 @@ export class CourseService {
   constructor(
     @InjectRepository(Course)
     private courseRepository: Repository<Course>,
+    
     private mediaService: MediaService,
   ) {}
 

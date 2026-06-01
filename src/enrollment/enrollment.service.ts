@@ -183,4 +183,12 @@ export class EnrollmentService {
 
     return enrollment;
   }
+
+  async getReferredEnrollments(affiliateId: number) {
+    return await this.enrollmentRepository.find({
+      where: { affiliate: { id: affiliateId }, status: EnrollmentStatus.COMPLETED },
+      relations: ['student', 'course'],
+      order: { enrolledAt: 'DESC' },
+    });
+  }
 }
