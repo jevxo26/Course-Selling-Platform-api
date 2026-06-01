@@ -28,7 +28,7 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://maruftech.online'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://maruftech.online', 'https://course-selling-platform-pfny.vercel.app/'],
     credentials: true,
   });
 
