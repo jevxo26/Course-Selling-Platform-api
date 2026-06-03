@@ -9,4 +9,9 @@ export class StatsController {
   getStats() {
     return this.statsService.getStats();
   }
+
+  @Get('admin-dashboard')
+  getAdminDashboardStats() {
+    return this.statsService.getAdminDashboardStats();
+  }
 }
