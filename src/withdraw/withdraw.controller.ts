@@ -28,6 +28,11 @@ export class WithdrawController {
     return this.withdrawService.findPublicLive();
   }
 
+  @Get('live-earning')
+  findPublicLiveEarning() {
+    return this.withdrawService.findPublicLiveEarning();
+  }
+
   @Post('request')
   @UseGuards(JwtAuthGuard, RolesGuard)
   requestWithdrawal(@Request() req: any, @Body() createWithdrawDto: CreateWithdrawDto) {

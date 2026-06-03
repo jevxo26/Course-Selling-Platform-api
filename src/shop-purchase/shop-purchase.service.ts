@@ -177,4 +177,21 @@ export class ShopPurchaseService {
       };
     });
   }
+
+  async getLiveEarnings() {
+    const purchases = await this.shopPurchaseRepository.find({
+      where: { status: ShopPurchaseStatus.COMPLETED },
+      relations: ['user', 'shop'],
+      order: { purchasedAt: 'DESC' },
+      take: 20,
+    });
+
+    return purchases.map(p => ({
+      id: p.id,
+      name: p.user?.name || 'Anonymous',
+      course: p.shop?.name || 'Unknown Product',
+      amount: `+$${p.amount || p.shop?.price || '0.00'}`,
+      avatar: p.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.user?.name || 'A')}`,
+    }));
+  }
 }

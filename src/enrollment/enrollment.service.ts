@@ -191,4 +191,21 @@ export class EnrollmentService {
       order: { enrolledAt: 'DESC' },
     });
   }
+
+  async getLiveEarnings() {
+    const enrollments = await this.enrollmentRepository.find({
+      where: { status: EnrollmentStatus.COMPLETED },
+      relations: ['student', 'course'],
+      order: { enrolledAt: 'DESC' },
+      take: 20,
+    });
+
+    return enrollments.map(e => ({
+      id: e.id,
+      name: e.student?.name || 'Anonymous',
+      course: e.course?.title || 'Unknown Course',
+      amount: `+$${e.amount || e.course?.price || '0.00'}`,
+      avatar: e.student?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(e.student?.name || 'A')}`,
+    }));
+  }
 }

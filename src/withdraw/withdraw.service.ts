@@ -373,6 +373,23 @@ export class WithdrawService {
     }));
   }
 
+  async findPublicLiveEarning() {
+    const withdraws = await this.withdrawRepository.find({
+      where: { status: WithdrawStatus.APPROVED },
+      relations: ['user', 'product', 'enrollment', 'enrollment.course'],
+      order: { updatedAt: 'DESC' },
+      take: 20,
+    });
+
+    return withdraws.map(w => ({
+      id: w.id,
+      name: this.maskName(w.user.name),
+      course: w.product?.botName || w.enrollment?.course?.title || 'Course/Product',
+      amount: `+$${w.studentAmount || '0.00'}`,
+      avatar: w.user.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(this.maskName(w.user.name))}`,
+    }));
+  }
+
   private maskName(name: string): string {
     if (!name) return 'User';
     const parts = name.split(' ');
