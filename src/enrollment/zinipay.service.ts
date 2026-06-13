@@ -14,7 +14,7 @@ export class ZinipayService {
     private readonly httpService: HttpService,
   ) {
     this.zinipayUrl = this.configService.get<string>('ZINIPAY_URL') || 'https://api.zinipay.com';
-    this.apiKey = this.configService.get<string>('ZINIPAY_API_KEY') || '84adb92cf4a8d4af153808a99470d3b85130782cfe866ff4';
+    this.apiKey = this.configService.get<string>('ZINIPAY_API_KEY') || '13fb2c1f9ebb4a95a85651c3374e30eed0e4b58a412ef393';
   }
 
   async createPayment(amount: number, referenceId: string | number, callbackPath: string = '/enrollments/callback') {
