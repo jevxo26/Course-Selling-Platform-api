@@ -6,7 +6,7 @@ import { Enrollment } from './entities/enrollment.entity';
 import { Course } from '../course/entities/course.entity';
 import { User } from '../users/entities/user.entity';
 import { HttpModule } from '@nestjs/axios';
-import { BkashService } from './bkash.service';
+import { ZinipayService } from './zinipay.service';
 
 @Module({
   imports: [
@@ -14,7 +14,7 @@ import { BkashService } from './bkash.service';
     HttpModule,
   ],
   controllers: [EnrollmentController],
-  providers: [EnrollmentService, BkashService],
-  exports: [EnrollmentService, BkashService],
+  providers: [EnrollmentService, ZinipayService],
+  exports: [EnrollmentService, ZinipayService],
 })
 export class EnrollmentModule {}

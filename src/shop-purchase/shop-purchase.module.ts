@@ -10,7 +10,7 @@ import { EnrollmentModule } from '../enrollment/enrollment.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([ShopPurchase, Shop, User]),
-    EnrollmentModule, // Import EnrollmentModule to use BkashService
+    EnrollmentModule, // Import EnrollmentModule to use ZinipayService
   ],
   controllers: [ShopPurchaseController],
   providers: [ShopPurchaseService],

@@ -32,7 +32,7 @@ export class EnrollmentController {
     return await this.enrollmentService.initiateEnrollment(createEnrollmentDto.studentId, createEnrollmentDto);
   }
 
-  @Get('callback')
+  @Get('zinipay/callback')
   async paymentCallback(
     @Query('paymentID') paymentID: string,
     @Query('enrollmentId') enrollmentId: string,

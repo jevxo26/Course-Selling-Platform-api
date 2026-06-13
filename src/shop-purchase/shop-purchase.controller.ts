@@ -27,13 +27,13 @@ export class ShopPurchaseController {
     private readonly configService: ConfigService,
   ) {}
 
-  @Post('buy/bkash')
+  @Post('buy/zinipay')
   @UseGuards(JwtAuthGuard)
   async initiatePayment(@Body() createDto: CreateShopPurchaseDto) {
-    return await this.shopPurchaseService.initiateBkashPayment(createDto.userId, createDto);
+    return await this.shopPurchaseService.initiateZinipayPayment(createDto.userId, createDto);
   }
 
-  @Get('bkash/callback')
+  @Get('zinipay/callback')
   async paymentCallback(
     @Query('paymentID') paymentID: string,
     @Query('purchaseId') purchaseId: string,
@@ -47,7 +47,7 @@ export class ShopPurchaseController {
     }
 
     // Pass the purchaseId to the service (it acts as the referenceId)
-    const result = await this.shopPurchaseService.handleBkashCallback(paymentID, parseInt(purchaseId));
+    const result = await this.shopPurchaseService.handleZinipayCallback(paymentID, parseInt(purchaseId));
 
     if (result.status === 'success') {
       return res.redirect(`${frontendUrl}/payment/success`);

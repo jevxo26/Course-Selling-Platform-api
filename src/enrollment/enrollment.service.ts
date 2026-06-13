@@ -6,7 +6,7 @@ import { Course } from '../course/entities/course.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { ManualEnrollmentDto } from './dto/manual-enrollment.dto';
-import { BkashService } from './bkash.service';
+import { ZinipayService } from './zinipay.service';
 
 @Injectable()
 export class EnrollmentService {
@@ -17,7 +17,7 @@ export class EnrollmentService {
     private readonly courseRepository: Repository<Course>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly bkashService: BkashService,
+    private readonly zinipayService: ZinipayService,
   ) {}
 
   async initiateEnrollment(studentId: number, createEnrollmentDto: CreateEnrollmentDto) {
@@ -68,21 +68,21 @@ export class EnrollmentService {
 
     enrollment.amount = createEnrollmentDto.amount || course.price;
     enrollment.status = EnrollmentStatus.PENDING;
-    enrollment.paymentMethod = createEnrollmentDto.paymentMethod || 'bkash';
+    enrollment.paymentMethod = createEnrollmentDto.paymentMethod || 'zinipay';
     enrollment.transactionId = createEnrollmentDto.transactionId ?? null;
 
     const savedEnrollment = await this.enrollmentRepository.save(enrollment);
 
-    // Get bKash payment URL
-    const paymentResponse = await this.bkashService.createPayment(
+    // Get ZiniPay payment URL
+    const paymentResponse = await this.zinipayService.createPayment(
       course.price,
       savedEnrollment.id,
-      `/enrollments/callback?enrollmentId=${savedEnrollment.id}`
+      `/enrollments/zinipay/callback?enrollmentId=${savedEnrollment.id}`
     );
     
     return {
       enrollmentId: savedEnrollment.id,
-      paymentUrl: paymentResponse.bkashURL,
+      paymentUrl: paymentResponse.zinipayURL,
     };
   }
 
@@ -94,11 +94,11 @@ export class EnrollmentService {
 
     if (!enrollment) throw new NotFoundException('Enrollment not found');
 
-    const executionResponse = await this.bkashService.executePayment(paymentID);
+    const executionResponse = await this.zinipayService.verifyPayment(paymentID);
 
-    if (executionResponse.transactionStatus === 'Completed') {
+    if (executionResponse.status === 'COMPLETED' || executionResponse.status === 'success') {
       enrollment.status = EnrollmentStatus.COMPLETED;
-      enrollment.transactionId = executionResponse.trxID;
+      enrollment.transactionId = executionResponse.transaction_id || executionResponse.trxID || paymentID;
       enrollment.enrolledAt = new Date();
       await this.enrollmentRepository.save(enrollment);
       return { status: 'success', message: 'Enrollment successful' };

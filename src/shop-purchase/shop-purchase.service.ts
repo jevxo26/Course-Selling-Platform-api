@@ -6,7 +6,7 @@ import { Shop } from '../shop/entities/shop.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateShopPurchaseDto } from './dto/create-shop-purchase.dto';
 import { ManualShopPurchaseDto } from './dto/manual-shop-purchase.dto';
-import { BkashService } from '../enrollment/bkash.service';
+import { ZinipayService } from '../enrollment/zinipay.service';
 
 @Injectable()
 export class ShopPurchaseService {
@@ -17,10 +17,10 @@ export class ShopPurchaseService {
     private readonly shopRepository: Repository<Shop>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly bkashService: BkashService,
+    private readonly zinipayService: ZinipayService,
   ) {}
 
-  async initiateBkashPayment(userId: number, createDto: CreateShopPurchaseDto) {
+  async initiateZinipayPayment(userId: number, createDto: CreateShopPurchaseDto) {
     const { shopId } = createDto;
     const shop = await this.shopRepository.findOne({ where: { id: shopId } });
     if (!shop) throw new NotFoundException('Shop not found');
@@ -59,25 +59,25 @@ export class ShopPurchaseService {
 
     purchase.amount = createDto.amount || shop.price;
     purchase.status = ShopPurchaseStatus.PENDING;
-    purchase.paymentMethod = 'bkash';
+    purchase.paymentMethod = 'zinipay';
     purchase.transactionId = null;
 
     const savedPurchase = await this.shopPurchaseRepository.save(purchase);
 
-    // Get bKash payment URL (using a specific callback path for shop)
-    const paymentResponse = await this.bkashService.createPayment(
+    // Get ZiniPay payment URL
+    const paymentResponse = await this.zinipayService.createPayment(
       purchase.amount, 
       savedPurchase.id, 
-      `/shop-purchases/bkash/callback?purchaseId=${savedPurchase.id}`
+      `/shop-purchases/zinipay/callback?purchaseId=${savedPurchase.id}`
     );
     
     return {
       purchaseId: savedPurchase.id,
-      paymentUrl: paymentResponse.bkashURL,
+      paymentUrl: paymentResponse.zinipayURL,
     };
   }
 
-  async handleBkashCallback(paymentID: string, purchaseId: number) {
+  async handleZinipayCallback(paymentID: string, purchaseId: number) {
     const purchase = await this.shopPurchaseRepository.findOne({
       where: { id: purchaseId },
       relations: ['shop', 'user'],
@@ -85,11 +85,11 @@ export class ShopPurchaseService {
 
     if (!purchase) throw new NotFoundException('Purchase not found');
 
-    const executionResponse = await this.bkashService.executePayment(paymentID);
+    const executionResponse = await this.zinipayService.verifyPayment(paymentID);
 
-    if (executionResponse.transactionStatus === 'Completed') {
+    if (executionResponse.status === 'COMPLETED' || executionResponse.status === 'success') {
       purchase.status = ShopPurchaseStatus.COMPLETED;
-      purchase.transactionId = executionResponse.trxID;
+      purchase.transactionId = executionResponse.transaction_id || executionResponse.trxID || paymentID;
       purchase.purchasedAt = new Date();
       await this.shopPurchaseRepository.save(purchase);
       return { status: 'success', message: 'Purchase successful' };
