@@ -7,6 +7,7 @@ import { User } from '../users/entities/user.entity';
 import { CreateShopPurchaseDto } from './dto/create-shop-purchase.dto';
 import { ManualShopPurchaseDto } from './dto/manual-shop-purchase.dto';
 import { ZinipayService } from '../enrollment/zinipay.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ShopPurchaseService {
@@ -18,6 +19,7 @@ export class ShopPurchaseService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly zinipayService: ZinipayService,
+    private readonly configService: ConfigService,
   ) {}
 
   async initiateZinipayPayment(userId: number, createDto: CreateShopPurchaseDto) {
@@ -65,10 +67,11 @@ export class ShopPurchaseService {
     const savedPurchase = await this.shopPurchaseRepository.save(purchase);
 
     // Get ZiniPay payment URL
+    const appUrl = this.configService.get<string>('APP_URL') || 'https://www.maruftech.online';
     const paymentResponse = await this.zinipayService.createPayment(
       purchase.amount, 
       savedPurchase.id, 
-      `/shop-purchases/zinipay/callback?purchaseId=${savedPurchase.id}`
+      `${appUrl}/shop-purchases/zinipay/callback?purchaseId=${savedPurchase.id}`
     );
     
     return {

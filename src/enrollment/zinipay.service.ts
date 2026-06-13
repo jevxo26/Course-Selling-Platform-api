@@ -14,11 +14,14 @@ export class ZinipayService {
     private readonly httpService: HttpService,
   ) {
     this.zinipayUrl = this.configService.get<string>('ZINIPAY_URL') || 'https://api.zinipay.com';
-    this.apiKey = this.configService.get<string>('84adb92cf4a8d4af153808a99470d3b85130782cfe866ff4')!;
+    this.apiKey = this.configService.get<string>('ZINIPAY_API_KEY') || '84adb92cf4a8d4af153808a99470d3b85130782cfe866ff4';
   }
 
   async createPayment(amount: number, referenceId: string | number, callbackPath: string = '/enrollments/callback') {
-    const callbackURL = `${this.configService.get('https://www.maruftech.online')}${callbackPath}`;
+    // The callbackPath is already fully absolute (because we passed it that way from enrollment/shop-purchase service)
+    const callbackURL = callbackPath.startsWith('http')
+      ? callbackPath
+      : `${this.configService.get<string>('APP_URL') || 'https://www.maruftech.online'}${callbackPath}`;
 
     try {
       const response = await firstValueFrom(
@@ -45,8 +48,14 @@ export class ZinipayService {
         status: response.data.status || 'success',
       };
     } catch (error) {
+      let errorMessage = error.response?.data?.message || error.message || 'ZiniPay Payment Creation Failed';
+      if (Array.isArray(errorMessage)) {
+        errorMessage = errorMessage.map((err: any) => err.message || JSON.stringify(err)).join(', ');
+      } else if (typeof errorMessage === 'object') {
+        errorMessage = JSON.stringify(errorMessage);
+      }
       this.logger.error('Failed to create ZiniPay payment', error.response?.data || error.message);
-      throw new InternalServerErrorException('ZiniPay Payment Creation Failed');
+      throw new InternalServerErrorException(errorMessage);
     }
   }
 

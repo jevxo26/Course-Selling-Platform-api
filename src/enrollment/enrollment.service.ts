@@ -7,6 +7,7 @@ import { User } from '../users/entities/user.entity';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { ManualEnrollmentDto } from './dto/manual-enrollment.dto';
 import { ZinipayService } from './zinipay.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class EnrollmentService {
@@ -18,6 +19,7 @@ export class EnrollmentService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly zinipayService: ZinipayService,
+    private readonly configService: ConfigService,
   ) {}
 
   async initiateEnrollment(studentId: number, createEnrollmentDto: CreateEnrollmentDto) {
@@ -74,10 +76,11 @@ export class EnrollmentService {
     const savedEnrollment = await this.enrollmentRepository.save(enrollment);
 
     // Get ZiniPay payment URL
+    const appUrl = this.configService.get<string>('APP_URL') || 'https://www.maruftech.online';
     const paymentResponse = await this.zinipayService.createPayment(
       course.price,
       savedEnrollment.id,
-      `/enrollments/zinipay/callback?enrollmentId=${savedEnrollment.id}`
+      `${appUrl}/enrollments/zinipay/callback?enrollmentId=${savedEnrollment.id}`
     );
     
     return {
