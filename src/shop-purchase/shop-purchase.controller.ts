@@ -43,7 +43,7 @@ export class ShopPurchaseController {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
 
     if (status === 'cancel' || status === 'failure') {
-      return res.redirect(`${frontendUrl}/payment/cancel`);
+      return res.redirect(`${frontendUrl}/payment/cancel?type=shop`);
     }
 
     // Pass the purchaseId to the service (it acts as the referenceId)
@@ -52,7 +52,7 @@ export class ShopPurchaseController {
     if (result.status === 'success') {
       return res.redirect(`${frontendUrl}/payment/success?type=shop&purchaseId=${purchaseId}`);
     } else {
-      return res.redirect(`${frontendUrl}/payment/cancel`);
+      return res.redirect(`${frontendUrl}/payment/cancel?type=shop`);
     }
   }
 
