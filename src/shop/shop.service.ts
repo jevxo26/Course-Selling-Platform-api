@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
 import { Shop } from './entities/shop.entity';
-import * as bcrypt from 'bcryptjs';
 import { MediaService } from '../media/media.service';
 import * as express from 'express';
 
@@ -17,17 +16,13 @@ export class ShopService {
   ) {}
 
   async create(createShopDto: CreateShopDto, file?: any, req?: express.Request) {
-    const { password, ...rest } = createShopDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
     let logoUrl = createShopDto.logo;
     if (file && req) {
       logoUrl = this.mediaService.getUploadUrl(file.filename, req);
     }
 
     const shop = this.shopRepository.create({
-      ...rest,
-      password: hashedPassword,
+      ...createShopDto,
       logo: logoUrl,
     });
     return this.shopRepository.save(shop);
@@ -81,10 +76,6 @@ export class ShopService {
 
   async update(id: number, updateShopDto: UpdateShopDto, file?: any, req?: express.Request) {
     const shop = await this.findOne(id);
-    
-    if (updateShopDto.password) {
-      updateShopDto.password = await bcrypt.hash(updateShopDto.password, 10);
-    }
 
     if (file && req) {
       updateShopDto.logo = this.mediaService.getUploadUrl(file.filename, req);
