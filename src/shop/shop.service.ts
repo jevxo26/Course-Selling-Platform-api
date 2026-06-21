@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateShopDto } from './dto/create-shop.dto';
@@ -96,6 +96,10 @@ export class ShopService {
 
   async remove(id: number) {
     const shop = await this.findOne(id);
-    return this.shopRepository.softRemove(shop);
+    try {
+      return await this.shopRepository.softDelete(id);
+    } catch (error: any) {
+      throw new BadRequestException(`Delete failed: ${error.message}`);
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Course } from './entities/course.entity';
@@ -150,6 +150,10 @@ export class CourseService {
 
   async remove(id: number): Promise<void> {
     const course = await this.findOne(id);
-    await this.courseRepository.softRemove(course);
+    try {
+      await this.courseRepository.softDelete(id);
+    } catch (error: any) {
+      throw new BadRequestException(`Delete failed: ${error.message}`);
+    }
   }
 }

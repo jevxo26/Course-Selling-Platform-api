@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreatePercentageDto } from './dto/create-percentage.dto';
@@ -44,7 +44,11 @@ export class PercentageService {
 
   async remove(id: number) {
     const percentage = await this.findOne(id);
-    return await this.percentageRepository.softRemove(percentage);
+    try {
+      return await this.percentageRepository.softDelete(id);
+    } catch (error: any) {
+      throw new BadRequestException(`Delete failed: ${error.message}`);
+    }
   }
 }
 
