@@ -5,14 +5,30 @@ export class CreateShopDto {
   @IsString()
   name: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsEmail()
-  gmail: string;
+  gmail?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @MinLength(6)
-  password: string;
+  password?: string;
+
+  @IsOptional()
+  @IsString()
+  type?: string;
+
+  @IsOptional()
+  @IsString()
+  whatsapp?: string;
+
+  @IsOptional()
+  @IsString()
+  telegram?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsOptional()
   @IsString()

@@ -8,11 +8,23 @@ export class Shop {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   gmail: string;
 
-  @Column({ select: false })
+  @Column({ select: false, nullable: true })
   password: string;
+
+  @Column({ default: 'instant' })
+  type: string;
+
+  @Column({ nullable: true })
+  whatsapp: string;
+
+  @Column({ nullable: true })
+  telegram: string;
+
+  @Column({ type: 'text', nullable: true })
+  description: string;
 
   @Column({ nullable: true })
   logo: string;
