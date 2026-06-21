@@ -181,6 +181,25 @@ export class ShopPurchaseService {
     });
   }
 
+  async findOneMyPurchase(id: number, userId: number) {
+    const p = await this.shopPurchaseRepository.createQueryBuilder('purchase')
+      .leftJoinAndSelect('purchase.shop', 'shop')
+      .addSelect('shop.password')
+      .where('purchase.id = :id', { id })
+      .andWhere('purchase.userId = :userId', { userId })
+      .getOne();
+
+    if (!p) throw new NotFoundException('Purchase not found');
+
+    const { password, ...shopDetails } = p.shop;
+    return {
+      ...shopDetails,
+      ...(p.status === ShopPurchaseStatus.COMPLETED ? { password } : {}),
+      purchaseStatus: p.status,
+      purchasedAt: p.purchasedAt,
+    };
+  }
+
   async getLiveEarnings() {
     const purchases = await this.shopPurchaseRepository.find({
       where: { status: ShopPurchaseStatus.COMPLETED },

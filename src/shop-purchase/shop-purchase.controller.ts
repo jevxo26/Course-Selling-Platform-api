@@ -50,7 +50,7 @@ export class ShopPurchaseController {
     const result = await this.shopPurchaseService.handleZinipayCallback(paymentID, parseInt(purchaseId));
 
     if (result.status === 'success') {
-      return res.redirect(`${frontendUrl}/payment/success`);
+      return res.redirect(`${frontendUrl}/payment/success?type=shop&purchaseId=${purchaseId}`);
     } else {
       return res.redirect(`${frontendUrl}/payment/cancel`);
     }
@@ -73,6 +73,12 @@ export class ShopPurchaseController {
   @UseGuards(JwtAuthGuard)
   async findMyPurchases(@Req() req: any) {
     return await this.shopPurchaseService.findMyPurchases(req.user.id);
+  }
+
+  @Get('my/:id')
+  @UseGuards(JwtAuthGuard)
+  async findOneMyPurchase(@Param('id') id: string, @Req() req: any) {
+    return await this.shopPurchaseService.findOneMyPurchase(+id, req.user.id);
   }
 
   @Patch(':id/approve')
