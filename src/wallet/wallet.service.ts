@@ -85,6 +85,7 @@ export class WalletService {
 
   async remove(id: number) {
     const wallet = await this.findOne(id);
-    return await this.walletRepository.softRemove(wallet);
+    await this.walletRepository.softDelete(id);
+    return wallet;
   }
 }
