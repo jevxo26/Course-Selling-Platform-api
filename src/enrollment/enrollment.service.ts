@@ -211,4 +211,13 @@ export class EnrollmentService {
       avatar: e.student?.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(e.student?.name || 'A')}`,
     }));
   }
+
+  async remove(id: number) {
+    const enrollment = await this.enrollmentRepository.findOne({ where: { id } });
+    if (!enrollment) {
+      throw new NotFoundException(`Enrollment with ID ${id} not found`);
+    }
+    await this.enrollmentRepository.remove(enrollment);
+    return { message: 'Enrollment removed successfully' };
+  }
 }

@@ -8,6 +8,7 @@ import {
   Res,
   Query,
   Param,
+  Delete,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { EnrollmentService } from './enrollment.service';
@@ -85,5 +86,12 @@ export class EnrollmentController {
   @UseGuards(JwtAuthGuard)
   async findOne(@Param('id') id: string, @Req() req: any) {
     return await this.enrollmentService.findOne(+id, req.user);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async remove(@Param('id') id: string) {
+    return await this.enrollmentService.remove(+id);
   }
 }
