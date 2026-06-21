@@ -90,6 +90,6 @@ export class CategoryService {
 
   async remove(id: number): Promise<void> {
     const category = await this.findOne(id);
-    await this.categoryRepository.remove(category);
+    await this.categoryRepository.softRemove(category);
   }
 }

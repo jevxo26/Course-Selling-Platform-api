@@ -19,6 +19,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { ShopModule } from './shop/shop.module';
 import { ShopPurchaseModule } from './shop-purchase/shop-purchase.module';
 import { StatsModule } from './stats/stats.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { StatsModule } from './stats/stats.module';
     ShopModule,
     ShopPurchaseModule,
     StatsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

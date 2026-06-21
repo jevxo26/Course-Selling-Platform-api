@@ -44,7 +44,7 @@ export class PercentageService {
 
   async remove(id: number) {
     const percentage = await this.findOne(id);
-    return await this.percentageRepository.remove(percentage);
+    return await this.percentageRepository.softRemove(percentage);
   }
 }
 

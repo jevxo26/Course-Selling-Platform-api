@@ -150,6 +150,6 @@ export class CourseService {
 
   async remove(id: number): Promise<void> {
     const course = await this.findOne(id);
-    await this.courseRepository.remove(course);
+    await this.courseRepository.softRemove(course);
   }
 }

@@ -2,19 +2,25 @@ import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class ZinipayService {
   private readonly logger = new Logger(ZinipayService.name);
   private readonly zinipayUrl: string;
-  private readonly apiKey: string;
+
 
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly settingsService: SettingsService,
   ) {
     this.zinipayUrl = this.configService.get<string>('ZINIPAY_URL') || 'https://api.zinipay.com';
-    this.apiKey = this.configService.get<string>('ZINIPAY_API_KEY') || '13fb2c1f9ebb4a95a85651c3374e30eed0e4b58a412ef393';
+  }
+
+  private async getApiKey(): Promise<string> {
+    const defaultKey = this.configService.get<string>('ZINIPAY_API_KEY') || '13fb2c1f9ebb4a95a85651c3374e30eed0e4b58a412ef393';
+    return await this.settingsService.getValue('ZINIPAY_API_KEY', defaultKey);
   }
 
   async createPayment(amount: number, referenceId: string | number, callbackPath: string = '/enrollments/callback') {
@@ -36,7 +42,7 @@ export class ZinipayService {
           },
           {
             headers: {
-              'zini-api-key': this.apiKey,
+              'zini-api-key': await this.getApiKey(),
             },
           },
         ),
@@ -67,7 +73,7 @@ export class ZinipayService {
           { payment_id: paymentID },
           {
             headers: {
-              'zini-api-key': this.apiKey,
+              'zini-api-key': await this.getApiKey(),
             },
           },
         ),

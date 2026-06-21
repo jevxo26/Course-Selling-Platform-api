@@ -96,6 +96,6 @@ export class ShopService {
 
   async remove(id: number) {
     const shop = await this.findOne(id);
-    return this.shopRepository.remove(shop);
+    return this.shopRepository.softRemove(shop);
   }
 }

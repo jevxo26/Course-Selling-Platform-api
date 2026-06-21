@@ -7,11 +7,13 @@ import { Course } from '../course/entities/course.entity';
 import { User } from '../users/entities/user.entity';
 import { HttpModule } from '@nestjs/axios';
 import { ZinipayService } from './zinipay.service';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Enrollment, Course, User]),
     HttpModule,
+    SettingsModule,
   ],
   controllers: [EnrollmentController],
   providers: [EnrollmentService, ZinipayService],
