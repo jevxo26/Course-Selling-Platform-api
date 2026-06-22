@@ -35,16 +35,30 @@ export class ShopPurchaseController {
 
   @Get('zinipay/callback')
   async paymentCallback(
-    @Query('paymentID') paymentID: string,
-    @Query('purchaseId') purchaseId: string,
-    @Query('status') status: string,
+    @Query() query: any,
     @Res() res: Response,
   ) {
+    const paymentID = query.paymentID || query.payment_id;
+    const purchaseId = query.purchaseId;
+    const status = query.status;
+
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || this.configService.get<string>('APP_URL') || 'https://www.maruftech.online';
 
-    if (status === 'cancel' || status === 'failure') {
+    console.log('Zinipay Callback Query Params:', query);
+
+    if (status === 'cancel' || status === 'failure' || !paymentID) {
       return res.redirect(`${frontendUrl}/payment/cancel?type=shop`);
     }
+
+    // Pass the purchaseId to the service (it acts as the referenceId)
+    const result = await this.shopPurchaseService.handleZinipayCallback(paymentID, parseInt(purchaseId));
+
+    if (result.status === 'success') {
+      return res.redirect(`${frontendUrl}/payment/success?type=shop&purchaseId=${purchaseId}`);
+    } else {
+      return res.redirect(`${frontendUrl}/payment/cancel?type=shop`);
+    }
+  }
 
     // Pass the purchaseId to the service (it acts as the referenceId)
     const result = await this.shopPurchaseService.handleZinipayCallback(paymentID, parseInt(purchaseId));
