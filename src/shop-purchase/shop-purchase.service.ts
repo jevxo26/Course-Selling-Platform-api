@@ -67,7 +67,7 @@ export class ShopPurchaseService {
     const savedPurchase = await this.shopPurchaseRepository.save(purchase);
 
     // Get ZiniPay payment URL
-    const appUrl = this.configService.get<string>('APP_URL') || 'https://api.maruftech.online';
+    const appUrl = this.configService.get<string>('API_URL') || 'https://course-selling-platform-api-production.up.railway.app';
     const paymentResponse = await this.zinipayService.createPayment(
       purchase.amount, 
       savedPurchase.id, 

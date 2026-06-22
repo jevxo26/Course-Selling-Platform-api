@@ -76,7 +76,7 @@ export class EnrollmentService {
     const savedEnrollment = await this.enrollmentRepository.save(enrollment);
 
     // Get ZiniPay payment URL
-    const appUrl = this.configService.get<string>('APP_URL') || 'https://api.maruftech.online';
+    const appUrl = this.configService.get<string>('API_URL') || 'https://course-selling-platform-api-production.up.railway.app';
     const paymentResponse = await this.zinipayService.createPayment(
       course.price,
       savedEnrollment.id,

@@ -27,7 +27,7 @@ export class ZinipayService {
     // The callbackPath is already fully absolute (because we passed it that way from enrollment/shop-purchase service)
     const callbackURL = callbackPath.startsWith('http')
       ? callbackPath
-      : `${this.configService.get<string>('APP_URL') || 'https://api.maruftech.online'}${callbackPath}`;
+      : `${this.configService.get<string>('API_URL') || 'https://course-selling-platform-api-production.up.railway.app'}${callbackPath}`;
 
     try {
       const response = await firstValueFrom(

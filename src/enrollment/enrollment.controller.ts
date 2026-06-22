@@ -40,7 +40,7 @@ export class EnrollmentController {
     @Query('status') status: string,
     @Res() res: Response,
   ) {
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || this.configService.get<string>('APP_URL') || 'https://www.maruftech.online';
 
     if (status === 'cancel' || status === 'failure') {
       return res.redirect(`${frontendUrl}/payment/cancel`);
