@@ -59,15 +59,6 @@ export class EnrollmentController {
     }
   }
 
-    const result = await this.enrollmentService.handlePaymentCallback(paymentID, parseInt(enrollmentId));
-
-    if (result.status === 'success') {
-      return res.redirect(`${frontendUrl}/payment/success`);
-    } else {
-      return res.redirect(`${frontendUrl}/payment/cancel`);
-    }
-  }
-
   @Post('manual')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)

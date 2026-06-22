@@ -25,7 +25,7 @@ export class ShopPurchaseController {
   constructor(
     private readonly shopPurchaseService: ShopPurchaseService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   @Post('buy/zinipay')
   @UseGuards(JwtAuthGuard)
@@ -60,52 +60,42 @@ export class ShopPurchaseController {
     }
   }
 
-    // Pass the purchaseId to the service (it acts as the referenceId)
-    const result = await this.shopPurchaseService.handleZinipayCallback(paymentID, parseInt(purchaseId));
+@Post('buy/manual')
+@UseGuards(JwtAuthGuard)
+async submitManualPurchase(@Body() manualDto: ManualShopPurchaseDto) {
+  return await this.shopPurchaseService.submitManualPurchase(manualDto.userId, manualDto);
+}
 
-    if (result.status === 'success') {
-      return res.redirect(`${frontendUrl}/payment/success?type=shop&purchaseId=${purchaseId}`);
-    } else {
-      return res.redirect(`${frontendUrl}/payment/cancel?type=shop`);
-    }
-  }
+@Get()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+async findAll() {
+  return await this.shopPurchaseService.findAll();
+}
 
-  @Post('buy/manual')
-  @UseGuards(JwtAuthGuard)
-  async submitManualPurchase(@Body() manualDto: ManualShopPurchaseDto) {
-    return await this.shopPurchaseService.submitManualPurchase(manualDto.userId, manualDto);
-  }
+@Get('my')
+@UseGuards(JwtAuthGuard)
+async findMyPurchases(@Req() req: any) {
+  return await this.shopPurchaseService.findMyPurchases(req.user.id);
+}
 
-  @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  async findAll() {
-    return await this.shopPurchaseService.findAll();
-  }
+@Get('my/:id')
+@UseGuards(JwtAuthGuard)
+async findOneMyPurchase(@Param('id') id: string, @Req() req: any) {
+  return await this.shopPurchaseService.findOneMyPurchase(+id, req.user.id);
+}
 
-  @Get('my')
-  @UseGuards(JwtAuthGuard)
-  async findMyPurchases(@Req() req: any) {
-    return await this.shopPurchaseService.findMyPurchases(req.user.id);
-  }
+@Patch(':id/approve')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+async approveManualPurchase(@Param('id') id: string) {
+  return await this.shopPurchaseService.approveManualPurchase(+id);
+}
 
-  @Get('my/:id')
-  @UseGuards(JwtAuthGuard)
-  async findOneMyPurchase(@Param('id') id: string, @Req() req: any) {
-    return await this.shopPurchaseService.findOneMyPurchase(+id, req.user.id);
-  }
-
-  @Patch(':id/approve')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  async approveManualPurchase(@Param('id') id: string) {
-    return await this.shopPurchaseService.approveManualPurchase(+id);
-  }
-
-  @Patch(':id/reject')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  async rejectManualPurchase(@Param('id') id: string) {
-    return await this.shopPurchaseService.rejectManualPurchase(+id);
-  }
+@Patch(':id/reject')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
+async rejectManualPurchase(@Param('id') id: string) {
+  return await this.shopPurchaseService.rejectManualPurchase(+id);
+}
 }
