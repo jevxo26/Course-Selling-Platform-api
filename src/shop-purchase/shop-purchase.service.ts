@@ -67,11 +67,11 @@ export class ShopPurchaseService {
     const savedPurchase = await this.shopPurchaseRepository.save(purchase);
 
     // Get ZiniPay payment URL
-    const appUrl = this.configService.get<string>('API_URL') || 'https://course-selling-platform-api-production.up.railway.app';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || this.configService.get<string>('APP_URL') || 'https://www.maruftech.online';
     const paymentResponse = await this.zinipayService.createPayment(
       purchase.amount, 
       savedPurchase.id, 
-      `${appUrl}/shop-purchases/zinipay/callback?purchaseId=${savedPurchase.id}`
+      `${frontendUrl}/api/shop-purchases/zinipay/callback?purchaseId=${savedPurchase.id}`
     );
     
     return {

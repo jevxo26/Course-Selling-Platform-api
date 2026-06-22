@@ -1,0 +1,6 @@
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || this.configService.get<string>('APP_URL') || 'https://www.maruftech.online';
+    const paymentResponse = await this.zinipayService.createPayment(
+      course.price,
+      savedEnrollment.id,
+      `${frontendUrl}/api/enrollments/zinipay/callback?enrollmentId=${savedEnrollment.id}`
+    );
