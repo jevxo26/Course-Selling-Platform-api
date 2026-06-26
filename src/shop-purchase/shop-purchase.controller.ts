@@ -38,15 +38,15 @@ export class ShopPurchaseController {
     @Query() query: any,
     @Res() res: Response,
   ) {
-    const paymentID = query.paymentID || query.payment_id;
+    const paymentID = query.paymentID || query.payment_id || query.paymentId;
     const purchaseId = query.purchaseId;
-    const status = query.status;
+    const status = query.status?.toLowerCase();
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || this.configService.get<string>('APP_URL') || 'https://www.maruftech.online';
 
     console.log('Zinipay Callback Query Params:', query);
 
-    if (status === 'cancel' || status === 'failure' || !paymentID) {
+    if (status === 'cancel' || status === 'failure' || status === 'failed' || !paymentID) {
       return res.redirect(`${frontendUrl}/payment/cancel?type=shop`);
     }
 

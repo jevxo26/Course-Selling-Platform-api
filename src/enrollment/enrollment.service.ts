@@ -99,7 +99,8 @@ export class EnrollmentService {
 
     const executionResponse = await this.zinipayService.verifyPayment(paymentID);
 
-    if (executionResponse.status === 'COMPLETED' || executionResponse.status === 'success') {
+    const execStatus = executionResponse.status?.toLowerCase();
+    if (execStatus === 'completed' || execStatus === 'success') {
       enrollment.status = EnrollmentStatus.COMPLETED;
       enrollment.transactionId = executionResponse.transaction_id || executionResponse.trxID || paymentID;
       enrollment.enrolledAt = new Date();
